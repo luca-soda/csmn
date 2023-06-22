@@ -7,5 +7,9 @@ function err = relative_error(true_value, approx_value)
     % err è l'errore relativo calcolato
     
     % Calcolo dell'errore relativo
-    err = abs((true_value - approx_value) / true_value);
+    if (ismatrix(true_value))
+        err = norm(approx_value-true_value) / norm(true_value);
+    else
+        err = abs((true_value - approx_value) / true_value);
+    end
 end
