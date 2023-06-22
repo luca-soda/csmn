@@ -1,50 +1,32 @@
-function [solution,iterations] = jacobi(system_matrix,known_terms,initial_approx,max_iterations,tolerance)
-% jacobi_method applica il metodo di Jacobi per risolvere un sistema lineare
-%
-% Input:
-% system_matrix: Matrice del sistema
-% known_terms: Vettore dei termini noti
-% initial_approx: Approssimazione iniziale della soluzione (default: vettore di zeri)
-% tolerance: Tolleranza per il criterio di arresto (default: 1e-5)
-% max_iterations: Numero massimo di iterazioni (default: 100)
-%
-% Output:
-% solution: Approssimazione della soluzione
-% iterations: Numero di iterazioni effettuate
+function x = jacobi(A, b, x0, max_iter, toll)
 
-% Controllo dei parametri in input e assegnazione valori di default
-if (nargin < 5), max_iterations = 100; end
-if (nargin < 4), tolerance = 1e-5; end
-if (nargin < 3), initial_approx = zeros(size(known_terms)); end
+    % Estrae la dimensione del vettore b, che è uguale al numero di righe di A
+    N = length(b);
+    
+    % Inizializza il vettore soluzione con il vettore iniziale x0
+    x = x0;
+    
+    % Inizia l'iterazione principale di Jacobi
+    for k=1:max_iter
+        % Per ogni riga della matrice A
+        for i=1:N
+            % Calcola la nuova approssimazione di x(i) utilizzando la formula di Jacobi:
+            % x(i) = 1/a_ii * (b_i - \sum_{j ≠ i} a_ij * x(j))
+            % dove a_ij sono gli elementi di A, x(j) è la j-esima componente del vettore soluzione all'iterazione precedente
+            % e b_i è la i-esima componente del vettore dei termini noti.
+            x(i) = (b(i)/A(i,i)) - (A(i,[1:i-1,i+1:N])*x0([1:i-1,i+1:N]))/A(i,i);
+        end
 
-% Controllo che la matrice sia diagonalmente dominante
-diag_dominant = all(2*abs(diag(system_matrix)) >= sum(abs(system_matrix),2));
-if ~diag_dominant
-    error('La matrice del sistema non è diagonalmente dominante.');
-end
-
-% Decomposizione della matrice A in D, E, F
-diagonal_matrix = diag(diag(system_matrix)); % Matrice diagonale D
-lower_matrix = -tril(system_matrix,-1); % Parte inferiore E
-upper_matrix = -triu(system_matrix,1); % Parte superiore F
-
-% Calcolo della matrice di iterazione B e del vettore f
-iteration_matrix = diagonal_matrix\(lower_matrix + upper_matrix);
-iteration_vector = diagonal_matrix\known_terms;
-
-% Inizializzazione
-stop_criteria = 1;
-iterations = 0;
-new_approx = initial_approx;
-
-% Ciclo di iterazione
-while stop_criteria
-    old_approx = new_approx;
-    new_approx = iteration_matrix*old_approx + iteration_vector;
-    iterations = iterations + 1;
-    stop_criteria = (norm(new_approx - old_approx) > tolerance*norm(old_approx)) && (iterations < max_iterations);
-end
-
-solution = new_approx;
+        % Controlla se la soluzione ha raggiunto la tolleranza desiderata. Se la norma della differenza tra
+        % la soluzione attuale e quella dell'iterazione precedente è minore o uguale alla tolleranza
+        % moltiplicata per la norma della soluzione precedente, allora l'algoritmo è considerato convergente
+        % e il ciclo si interrompe.
+        if (norm(x - x0) <= toll*norm(x0))
+            return
+        end
+        % Se la soluzione non ha raggiunto la tolleranza desiderata, aggiorna x0 con il vettore soluzione corrente
+        % e continua con la prossima iterazione.
+        x0=x;
+    end
 
 end
